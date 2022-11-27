@@ -4,7 +4,6 @@ E:\Study\source\repos\QLSV\QLSV\bin\Debug\net6.0-windows\QLSV.runtimeconfig.json
 E:\Study\source\repos\QLSV\QLSV\bin\Debug\net6.0-windows\QLSV.dll
 E:\Study\source\repos\QLSV\QLSV\bin\Debug\net6.0-windows\QLSV.pdb
 E:\Study\source\repos\QLSV\QLSV\obj\Debug\net6.0-windows\QLSV.csproj.AssemblyReference.cache
-E:\Study\source\repos\QLSV\QLSV\obj\Debug\net6.0-windows\QLSV.Form1.resources
 E:\Study\source\repos\QLSV\QLSV\obj\Debug\net6.0-windows\QLSV.csproj.GenerateResource.cache
 E:\Study\source\repos\QLSV\QLSV\obj\Debug\net6.0-windows\QLSV.GeneratedMSBuildEditorConfig.editorconfig
 E:\Study\source\repos\QLSV\QLSV\obj\Debug\net6.0-windows\QLSV.AssemblyInfoInputs.cache
@@ -40,3 +39,4 @@ E:\Study\source\repos\QLSV\QLSV\bin\Debug\net6.0-windows\runtimes\win-x86\native
 E:\Study\source\repos\QLSV\QLSV\bin\Debug\net6.0-windows\runtimes\win\lib\netstandard2.0\System.Runtime.Caching.dll
 E:\Study\source\repos\QLSV\QLSV\obj\Debug\net6.0-windows\QLSV.csproj.CopyComplete
 E:\Study\source\repos\QLSV\QLSV\bin\Debug\net6.0-windows\QLSV.dll.config
+E:\Study\source\repos\QLSV\QLSV\obj\Debug\net6.0-windows\QLSV.QLTTSV.resources
