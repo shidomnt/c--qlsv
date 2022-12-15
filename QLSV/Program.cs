@@ -1,3 +1,6 @@
+
+using QLSV.EF.Contexts;
+
 namespace QLSV
 {
     internal static class Program
@@ -11,7 +14,14 @@ namespace QLSV
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new QLTTSV(new Controllers.SinhVienController(Database.GetDB())));
+            var databaseContext = new QlsvContext();
+            try
+            {
+                Application.Run(new QLTTSV(databaseContext));
+            } catch (Exception ex)
+            {
+                ShowError(ex);
+            }
         }
 
         static public void ShowError(Exception ex, string title = "Loi khong xac dinh")

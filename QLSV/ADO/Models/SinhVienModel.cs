@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace QLSV.Models
+﻿namespace QLSV.Models
 {
     internal class SinhVienModel
     {
@@ -16,7 +10,7 @@ namespace QLSV.Models
         public int? gioiTinh = 1;
         public DateTime? ngaySinh = DateTime.Today;
         public string? maNganh = string.Empty;
-        
+
         public SinhVienModel() { }
         public SinhVienModel(
             string? _maSV,
@@ -27,7 +21,8 @@ namespace QLSV.Models
             int? _gioiTinh,
             DateTime? _ngaySinh,
             string? _maNganh
-            ) {
+            )
+        {
             maSV = _maSV;
             hoSV = _hoSV;
             tenSV = _tenSV;

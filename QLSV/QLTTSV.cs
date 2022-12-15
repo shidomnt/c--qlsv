@@ -1,76 +1,63 @@
-﻿using Microsoft.Data.SqlClient;
-using QLSV.Controllers;
-using QLSV.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using QLSV.EF.Contexts;
+using QLSV.EF.Models;
 using System.Data;
 
 namespace QLSV
 {
     internal partial class QLTTSV : Form
     {
-        private SinhVienModel _sinhVienFormInput = new();
-        private SinhVienModel sinhVienFormInput
+        private SinhVien SinhVienFormState
         {
-            get { return _sinhVienFormInput; }
-            set
-            {
-                _sinhVienFormInput = value;
-                txt_hoVaTenBox.Text = this.sinhVienFormInput.hoSV + ' ' + this.sinhVienFormInput.tenSV;
-                txt_maSVBox.Text = this.sinhVienFormInput.maSV;
-                txt_diaChiBox.Text = this.sinhVienFormInput.diaChi;
-                txt_noiSinhBox.Text = this.sinhVienFormInput.noiSinh;
-                txt_ngaySinhBox.Value = Convert.ToDateTime(this.sinhVienFormInput.ngaySinh);
-                txt_maNganhBox.Text = this.sinhVienFormInput.maNganh;
-                txt_gioiTinhNamRadio.Checked = this.sinhVienFormInput.gioiTinh == 1;
-                txt_gioiTinhNuRadio.Checked = this.sinhVienFormInput.gioiTinh == 0;
-            }
+            get;
+            set;
         }
-        SqlDataAdapter adapter = new();
-        DataTable sinhVienTable = new();
-        private SinhVienController sinhVienController;
-        public QLTTSV(SinhVienController controller)
+        public QlsvContext Context { get; }
+        public QLTTSV(QlsvContext context)
         {
             InitializeComponent();
-            sinhVienFormInput = new();
-            sinhVienController = controller;
+            Context = context;
+            SinhVienFormState = new();
+            SyncStateAndForm();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private async void FormQLTTSV_Load(object sender, EventArgs e)
         {
-            var db = Database.GetDB();
-            adapter.SelectCommand = new SqlCommand("select * from SinhVien", db.connection);
-            adapter.Fill(sinhVienTable);
-            dataDSSinhVien.DataSource = sinhVienTable;
-            foreach (var i in Enumerable.Range(0, sinhVienTable.Columns.Count))
+            try
             {
-                dataDSSinhVien.Columns[i].Width = (dataDSSinhVien.Width - 42) / sinhVienTable.Columns.Count;
+                await Context.SinhViens.LoadAsync();
+                dataDSSinhVien.DataSource = Context.SinhViens.Local.ToBindingList();
+            }
+            catch (Exception ex)
+            {
+                Program.ShowError(ex, "Loi khi ket noi Database");
+                Application.Exit();
             }
         }
-        private void txt_addBtn_Click(object sender, EventArgs e)
+        private async void txt_addBtn_Click(object sender, EventArgs e)
         {
             ExtractInputFromForm();
-            sinhVienController.Insert(sinhVienFormInput);
-            Program.ShowInfomation("Thêm sinh viên thành công!");
-            RefetchDataTable();
+            Context.ChangeTracker.Clear();
+            Context.SinhViens.Add(SinhVienFormState);
+            await SaveChangesAsync();
         }
 
-        private void txt_updateBtn_Click(object sender, EventArgs e)
+        private async void txt_updateBtn_Click(object sender, EventArgs e)
         {
             ExtractInputFromForm();
-            sinhVienController.Update(sinhVienFormInput);
-            Program.ShowInfomation("Sửa sinh viên thành công!");
-            RefetchDataTable();
+            Context.ChangeTracker.Clear();
+            Context.SinhViens.Update(SinhVienFormState);
+            await SaveChangesAsync();
+
         }
 
-        private void txt_deleteBtn_Click(object sender, EventArgs e)
+        private async void txt_deleteBtn_Click(object sender, EventArgs e)
         {
             ExtractInputFromForm();
-            sinhVienController.Delete(sinhVienFormInput);
-            Program.ShowInfomation("Xóa sinh viên thành công!");
-            RefetchDataTable();
-            if (sinhVienTable.Rows.Count == 0)
-            {
-                txt_fromRefreshBtn.PerformClick();
-            }
+            Context.ChangeTracker.Clear();
+            Context.SinhViens.Remove(SinhVienFormState);
+            await SaveChangesAsync();
+
         }
         private void txt_exitBtn_Click(object sender, EventArgs e)
         {
@@ -82,6 +69,7 @@ namespace QLSV
         }
         private void txt_gioiTinhRadio_CheckedChanged(object sender, EventArgs e)
         {
+            Console.WriteLine(SinhVienFormState.Gioitinh);
             RadioButton? btn = sender as RadioButton;
             if (btn == null)
             {
@@ -90,18 +78,12 @@ namespace QLSV
             }
             if (btn.Checked)
             {
-                string btnText = btn.Text;
-                switch (btnText)
+                SinhVienFormState.Gioitinh = btn.Text switch
                 {
-                    case "Nam":
-                        sinhVienFormInput.gioiTinh = 1;
-                        break;
-                    case "Nữ":
-                        sinhVienFormInput.gioiTinh = 0;
-                        break;
-                    default:
-                        break;
-                }
+                    "Nam" => 1,
+                    "Nữ" => 0,
+                    _ => 1
+                };
             }
         }
 
@@ -113,52 +95,74 @@ namespace QLSV
                 Program.ShowError(new Exception("sender is not a data grid view"));
                 return;
             }
-            var result = ExtractRowFromSelectedRowDataGridView(sdr);
+            var result = ExtractDataFromSelectedRowDataGridView(sdr);
             if (result != null)
             {
-                sinhVienFormInput = result;
+                SinhVienFormState = result;
+                SyncStateAndForm();
             }
         }
 
         private void txt_fromRefreshBtn_Click(object sender, EventArgs e)
         {
-            sinhVienFormInput = new();
+            SinhVienFormState = new();
         }
-        private void RefetchDataTable()
+        private async Task<int> SaveChangesAsync()
         {
-            sinhVienTable.Clear();
-            adapter.Fill(sinhVienTable);
+            try
+            {
+                var result = await Context.SaveChangesAsync();
+                await Context.SinhViens.LoadAsync();
+                dataDSSinhVien.DataSource = Context.SinhViens.Local.ToBindingList();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Program.ShowError(ex, "Loi khi cap nhat du lieu den DB");
+                return 0;
+            }
+        }
+
+        private void SyncStateAndForm()
+        {
+            txt_hoVaTenBox.Text = SinhVienFormState.Hosv + ' ' + SinhVienFormState.Tensv;
+            txt_maSVBox.Text = SinhVienFormState.Masv;
+            txt_diaChiBox.Text = SinhVienFormState.Diachi;
+            txt_noiSinhBox.Text = SinhVienFormState.Noisinh;
+            txt_ngaySinhBox.Value = SinhVienFormState.Ngaysinh;
+            txt_maNganhBox.Text = SinhVienFormState.Manganh.ToString();
+            txt_gioiTinhNamRadio.Checked = SinhVienFormState.Gioitinh == 1;
+            txt_gioiTinhNuRadio.Checked = SinhVienFormState.Gioitinh == 0;
         }
 
         private void ExtractInputFromForm()
         {
             var hoTenSV = new Stack<string>(txt_hoVaTenBox.Text.Split(' '));
-            sinhVienFormInput.maSV = txt_maSVBox.Text;
-            sinhVienFormInput.tenSV = hoTenSV.Pop();
-            sinhVienFormInput.hoSV = string.Join(' ', hoTenSV.ToArray().Reverse());
-            sinhVienFormInput.diaChi = txt_diaChiBox.Text;
-            sinhVienFormInput.noiSinh = txt_noiSinhBox.Text;
-            sinhVienFormInput.ngaySinh =
-                txt_ngaySinhBox.Value;
-            sinhVienFormInput.maNganh = txt_maNganhBox.Text;
+            var tenSv = hoTenSV.Pop();
+            var hoSv = string.Join(' ', hoTenSV.ToArray().Reverse());
+            SinhVien sinhVien = new()
+            {
+                Masv = txt_maSVBox.Text,
+                Hosv = hoSv,
+                Tensv = tenSv,
+                Diachi = txt_diaChiBox.Text,
+                Noisinh = txt_noiSinhBox.Text,
+                Ngaysinh = txt_ngaySinhBox.Value,
+                Manganh = Convert.ToInt32(txt_maNganhBox.Text),
+            };
+            SinhVienFormState = sinhVien;
         }
 
-        private SinhVienModel? ExtractRowFromSelectedRowDataGridView(DataGridView view)
+        private SinhVien? ExtractDataFromSelectedRowDataGridView(DataGridView view)
         {
             int? currentIndex = view.CurrentCell?.RowIndex;
             if (currentIndex == null)
             {
                 return null;
             }
-            var maSV = Convert.ToString(sinhVienTable.Rows[(int)currentIndex]["MASV"]);
-            var hoSV = Convert.ToString(sinhVienTable.Rows[(int)currentIndex]["HOSV"]);
-            var tenSV = Convert.ToString(sinhVienTable.Rows[(int)currentIndex]["TENSV"]);
-            var diaChi = Convert.ToString(sinhVienTable.Rows[(int)currentIndex]["DIACHI"]);
-            var noiSinh = Convert.ToString(sinhVienTable.Rows[(int)currentIndex]["NOISINH"]);
-            var gioiTinh = Convert.ToInt32(sinhVienTable.Rows[(int)currentIndex]["GIOITINH"]);
-            var ngaySinh = Convert.ToDateTime(sinhVienTable.Rows[(int)currentIndex]["NGAYSINH"]);
-            var maNganh = Convert.ToString(sinhVienTable.Rows[(int)currentIndex]["MANGANH"]);
-            return new(maSV, hoSV, tenSV, diaChi, noiSinh, gioiTinh, ngaySinh, maNganh);
+            var maSV = dataDSSinhVien.Rows[(int)currentIndex].Cells["MaSV"].Value.ToString();
+            var sinhVien = Context.SinhViens.Where(sinhvien => sinhvien.Masv == maSV);
+            return sinhVien.Any() ? sinhVien.First() : null;
         }
 
     }

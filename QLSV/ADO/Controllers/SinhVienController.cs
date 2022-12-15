@@ -1,14 +1,15 @@
 ﻿using Microsoft.Data.SqlClient;
 using QLSV.Models;
+using QLSV.ADO;
 
 namespace QLSV.Controllers
 {
 
     internal class SinhVienController : Controller<SinhVienModel>
     {
-        public SinhVienController(Database database, string tableName = "SinhVien") 
+        public SinhVienController(Database database, string tableName = "SinhVien")
             : base(database, tableName)
-        {}
+        { }
         public override List<SinhVienModel> Select()
         {
             string sql = $"select * from @TABLENAME";
@@ -20,7 +21,7 @@ namespace QLSV.Controllers
             {
                 if (err != null)
                 {
-                    Program.ShowError(err, "Loi khi select from sinh vien");
+                    Program.ShowError(err, "Loi khi select sinh vien");
                 }
                 if (reader != null && !reader.IsClosed)
                 {
@@ -51,13 +52,21 @@ namespace QLSV.Controllers
                 @TENSV,@DIACHI,
                 @NOISINH,@GIOITINH,
                 @NGAYSINH,@MANGANH)";
+            if (sinhvienModel.maSV == string.Empty)
+            {
+                Program.ShowError(new Exception("Không được để Mã SV rỗng"), "Loi khi Insert SinhVien");
+                return;
+
+            }
             var cmd = CommandMaker(sql, sinhvienModel);
             _db.ExecQuery(cmd, (err, _) =>
             {
                 if (err is not null)
                 {
                     Program.ShowError(err, "Loi khi Insert SinhVien");
+                    return;
                 }
+                Program.ShowInfomation("Thêm sinh viên thành công!");
             });
         }
         public override void Update(SinhVienModel sinhvienModel)
@@ -73,25 +82,42 @@ namespace QLSV.Controllers
                 MANGANH = @MANGANH
                 where MASV = @MASV
                 ";
+            if (sinhvienModel.maSV == string.Empty)
+            {
+                Program.ShowError(new Exception("Không được để Mã SV rỗng"), "Loi khi Update SinhVien");
+                return;
+
+            }
             var cmd = CommandMaker(sql, sinhvienModel);
             _db.ExecQuery(cmd, (err, _) =>
             {
                 if (err is not null)
                 {
                     Program.ShowError(err, "Loi khi Update SinhVien");
+                    return;
                 }
+                Program.ShowInfomation("Sửa sinh viên thành công!");
+
             });
         }
         public override void Delete(SinhVienModel sinhvienModel)
         {
             string sql = @$"delete from {_tableName} where MASV = @MASV";
+            if (sinhvienModel.maSV == string.Empty)
+            {
+                Program.ShowError(new Exception("Không được để Mã SV rỗng"), "Loi khi Delete SinhVien");
+                return;
+
+            }
             var cmd = CommandMaker(sql, sinhvienModel);
             _db.ExecQuery(cmd, (err, _) =>
             {
                 if (err is not null)
                 {
                     Program.ShowError(err, "Loi khi Delete SinhVien");
+                    return;
                 }
+                Program.ShowInfomation("Xóa sinh viên thành công!");
             });
         }
         private SqlCommand CommandMaker(string query, SinhVienModel sinhvienModel)

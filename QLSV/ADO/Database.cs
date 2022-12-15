@@ -1,7 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Configuration;
 
-namespace QLSV
+namespace QLSV.ADO
 {
     internal class Database
     {
@@ -75,7 +75,7 @@ namespace QLSV
             }
         }
 
-        public static 
+        public static
             IEnumerable<TResult> ExtractFromReader<TResult>
             (SqlDataReader reader, Func<SqlDataReader, TResult> selector)
         {
